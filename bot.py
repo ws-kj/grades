@@ -103,7 +103,14 @@ init_db()
 
 
 @bot.command(name='get')
-async def get(ctx):
+async def get(ctx, mp=1):
+
+    if mp <= 0:
+        mp = 0
+    if mp > 4:
+        mp = 4
+    mp -= 1
+
     q = query("""select * from users where id == ?""", ctx.message.author.id)
     if len(q) == 0:
         await setup_b(ctx, ctx.message.author)
@@ -114,7 +121,7 @@ async def get(ctx):
     d = q[0]['domain']
     sv = StudentVue(u, p, d)
     
-    gb = sv.get_gradebook(1)['Gradebook']['Courses']['Course']
+    gb = sv.get_gradebook(mp)['Gradebook']['Courses']['Course']
     
     grades=[]
 
@@ -138,7 +145,7 @@ async def get(ctx):
                                 nextent = False
         grades.append(vals)
 
-    res = "```Your Grades:\n"
+    res = "```Your Grades (current quarter):\n"
 
     table = PrettyTable()
     table.field_names = ["Class", "Letter Grade", "Exact Grade"]
@@ -154,23 +161,30 @@ async def get(ctx):
 
     await ctx.send(res)
 
+@bot.command(name='info')
+async def info(ctx):
+    await msg(ctx, ctx.message.author, "To use this bot, you must first connect your StudentVUE accound with g!setup. Then you can use g!get to see your current grades.")
+
 @bot.command(name='setup')
-async def setup_c(ctx):
-    await setup_b(ctx, ctx.message.author)
+async def setup(ctx):
+    await msg(ctx, ctx.message.author)
 
 @bot.command()
-async def setup_b(ctx, user: discord.Member = None,  message=None):
+async def msg(ctx, user: discord.Member = None,  message=None):
     if user is None:
         await ctx.send("no user")
     else:
-        await user.send("Please enter 'g!creds' followed by your StudentVUE username, password, and domain seperated by spaces.\n Example: `g!creds 000000 pass.word00 vue.myschool.us`:")
+        if message == None:
+            await ctx.message.author.send("Please enter 'g!creds' followed by your Student ID, password, and StudentVUE domain seperated by spaces.If you attend Arlington Public Schools, your domain is 'vue.apsva.us'. \n Example: `g!creds 000000 password vue.apsva.us`:")
+        else:
+            await user.send(message)
 
 @bot.command(name='creds')
 async def creds(ctx):
     if isinstance(ctx.channel, discord.channel.DMChannel):    
         words=ctx.message.content.split()
         if len(words) < 4:
-            await ctx.message.author.send("Please enter 'g!creds' followed by your StudentVUE username, password, and domain seperated by spaces.\n Example: `g!creds 000000 pass.word00 vue.myschool.us`:")
+            await ctx.message.author.send("Please enter 'g!creds' followed by your Student ID, password, and StudentVUE domain seperated by spaces.If you attend Arlington Public Schools, your domain is 'vue.apsva.us'. \n Example: `g!creds 000000 password vue.apsva.us`:")
             return;
 
         words = words[1:4]
@@ -187,4 +201,10 @@ async def creds(ctx):
         await ctx.message.author.send('Account setup complete. You may now use g!get to view your StudentVUE grades. Keep in mind that if your creds are incorrect, you will not be able to view your grades.')
     else:
         await ctx.send('g!creds only works in DM')
+
+@bot.event
+async def on_ready():
+    print("Grades Bot online")
+    await bot.change_presence(activity=discord.Game(name="g!info for help"))
+
 bot.run(TOKEN)
