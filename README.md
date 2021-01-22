@@ -1,2 +1,3 @@
 # grades
-Quick utility to check StudentVUE grades in terminal
+
+Discord Bot to quickly check StudentVUE grades.
