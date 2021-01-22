@@ -103,17 +103,19 @@ init_db()
 
 
 @bot.command(name='get')
-async def get(ctx, mp=1):
+async def get(ctx, mp=2):
 
-    if mp <= 0:
+    if mp < 0:
         mp = 0
     if mp > 4:
         mp = 4
     mp -= 1
+    print(mp)
+
 
     q = query("""select * from users where id == ?""", ctx.message.author.id)
     if len(q) == 0:
-        await setup_b(ctx, ctx.message.author)
+        await msg(ctx, ctx.message.author)
         return
 
     u = q[0]['username']
@@ -145,7 +147,7 @@ async def get(ctx, mp=1):
                                 nextent = False
         grades.append(vals)
 
-    res = "```Your Grades (current quarter):\n"
+    res = "```Your Grades (quarter " + str(mp + 1) + "):\n"
 
     table = PrettyTable()
     table.field_names = ["Class", "Letter Grade", "Exact Grade"]
@@ -163,7 +165,7 @@ async def get(ctx, mp=1):
 
 @bot.command(name='info')
 async def info(ctx):
-    await msg(ctx, ctx.message.author, "To use this bot, you must first connect your StudentVUE accound with g!setup. Then you can use g!get to see your current grades.")
+    await msg(ctx, ctx.message.author, "To use this bot, you must first connect your StudentVUE accound with g!setup. Then you can use g!get [current quarter #] to see your current grades.")
 
 @bot.command(name='setup')
 async def setup(ctx):
